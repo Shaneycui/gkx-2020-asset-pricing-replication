@@ -18,7 +18,7 @@ This document distinguishes **actual file provenance**, **methodological referen
 
 - Implementation: `preprocess_features_stream.py`; resulting file: `data/gkx_features_3char_full.csv`.
 - For each calendar month and each characteristic, rank **cross-sectionally** among non-missing stocks using average ranks for ties; map to `[-1, 1]` using `2 * rank / (n + 1) - 1`, where `n` is the non-missing stock count for that characteristic and month.
-- Existing preprocessing preserved missing characteristics as NaN. **Missing-characteristic imputation has not yet been implemented**, and should not be represented as completed.
+- The intermediate ranked file preserves missing characteristics as NaN. Separate script `impute_features.py` performs **monthly cross-sectional median imputation** on scaled feature columns and writes `data/gkx_features_3char_imputed.csv`, without overwriting the ranked intermediate file. Any residual NaNs when an entire month has no valid characteristic (BM only: 66 months 1957-01 to 1962-06, 72,077 stock-month rows) receive a project-specific **zero fallback**, which must not be characterized as a rule explicitly specified by GKX.
 - Previously checked: input/output row counts agree at 4,117,300; 780 months; duplicate (`DATE`, `permno`) count 0; saved monthly counts reconciled. These tests do not imply every feature value has been independently verified.
 
 ## 2. Monthly stock returns (y)
@@ -63,3 +63,10 @@ This document distinguishes **actual file provenance**, **methodological referen
 6. Record download date, version information where available, raw data file hashes, and project code commit hashes for reproducibility.
 
 **Scope statement:** This project is a simplified replication of the GKX empirical machine-learning *method*, with 3 selected characteristics and third-party Yahoo-based returns. It is not the original article's full empirical dataset or results replication.
+
+### Locally verified imputation diagnostics (2026-11-15)
+
+- Input file: `data/gkx_features_3char_full.csv`; output file: `data/gkx_features_3char_imputed.csv`.
+- Missing before: mom1m 31,738; bm 1,074,711; mvel1 3,070. Following per-`DATE` median imputation: 0; 72,077; 0 respectively. The residual 72,077 BM records correspond *exactly* to 66 entire months from 1957-01 to 1962-06 with no nonmissing BM observations; zero fallback applied as explicitly documented project-specific choice.
+- Source values originally non-null were checked unchanged for all three columns. Reopened output: 4,117,300 rows; 0 missing across the 3 scaled characteristics; 0 duplicate (`DATE`, `permno`) keys.
+- These diagnostics do not validate the underlying historical data's release timing or the Yahoo-to-PERMNO mapping. Avoid calling this an exact recreation of the paper's complete preprocessing.
