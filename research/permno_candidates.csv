@@ -1,0 +1,8 @@
+ticker,permno,evidence_url,evidence_type,status,valid_from,valid_to,notes
+AAPL,14593,https://www.financialriskforecasting.com/seminars/1.pdf,educational_CRSP_query_example,candidate,,,Historical dates not independently verified
+MSFT,10107,https://www.financialriskforecasting.com/seminars/1.pdf,educational_CRSP_query_example,candidate,,,Historical dates not independently verified
+JPM,47896,https://www.financialriskforecasting.com/seminars/1.pdf,educational_CRSP_query_example,candidate,,,Corporate restructuring and predecessor histories require review
+C,70519,https://www.financialriskforecasting.com/seminars/1.pdf,educational_CRSP_query_example,candidate,,,Ticker history and corporate restructuring require review
+XOM,11850,https://www.financialriskforecasting.com/seminars/1.pdf,educational_CRSP_query_example,candidate,,,Exxon Mobil merger period requires review
+MCD,43449,https://www.financialriskforecasting.com/seminars/1.pdf,educational_CRSP_query_example,candidate,,,Historical valid dates not independently verified
+GE,12060,https://www.financialriskforecasting.com/seminars/1.pdf,educational_CRSP_query_example,candidate,,,Corporate spin-offs and security-history changes require review
