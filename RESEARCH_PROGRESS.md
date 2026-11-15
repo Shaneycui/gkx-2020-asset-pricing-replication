@@ -25,7 +25,7 @@ Refer to [DATA_SOURCES.md](DATA_SOURCES.md) for provenance and unresolved caveat
 
 - Historical, date-specific ticker ↔ PERMNO mapping for stocks beyond AAPL; no mass merging based on unverified mappings.
 - Separate independent checks of actual returns against adjusted price history for sampled stock-months.
-- Appropriate treatment of missing characteristics; do not claim all rows are complete.
+- Three-feature imputation completed and locally verified; **historical full-month BM zero fallback is a documented project-specific rule**, not a paper-mandated default. Revisit if using pre-1962-07 samples.
 - Point-in-time predictor/target availability and lookahead-prevention audit.
 - Train/validation/test chronological partitions, out-of-sample baselines and metrics.
 - Elastic Net, Random Forest, robustness tests, documented reproducibility report.
@@ -38,3 +38,6 @@ Inspect whether reliable publicly accessible identifier mappings (historical tic
 ## Status reporting
 
 Previous conversational percentage estimates (e.g., ~55%) were informal, not a measured completion rate. Prioritize confirmed deliverables and pending blockers over a fabricated precise overall percentage.
+
+7. **Full market feature imputation, independently reloaded:** `impute_features.py` writes `data/gkx_features_3char_imputed.csv`. Initial missing counts: `mom1m_scaled` 31,738, `bm_scaled` 1,074,711, `mvel1_scaled` 3,070. Monthly cross-sectional median filling leaves only 72,077 `bm_scaled` nulls, all in 66 wholly missing-BM months (1957-01 through 1962-06); a documented **project-specific fallback** fills these with zero. Original non-null values unchanged for all 3 features (`True`). Saved/reloaded file checked by `validate_imputed_features.py`: 4,117,300 rows, 0 remaining missing across the 3 columns, 0 duplicate (`DATE`, `permno`) keys; `ALL VALIDATIONS PASSED`, process exit 0. These checks establish integrity, not original dataset's point-in-time correctness.
+8. **MSFT provisional label alignment:** candidate PERMNO 10107; 429 feature months (1986-04 through 2021-12); 484 Yahoo return months (1986-04 through 2026-07); prior merged data report 414 completely observed three-feature/target rows before imputation, with `mom1m_scaled` 1 missing, `bm_scaled` 15 missing, `mvel1_scaled` and `future_return` 0 missing. Historical mapping remains *candidate*, not verified.
