@@ -47,3 +47,16 @@ Previous conversational percentage estimates (e.g., ~55%) were informal, not a m
 - Added `research/permno_candidates.csv`: 7 candidate pairs drawn from the public Financial Risk Forecasting course handout (AAPL 14593, MSFT 10107, JPM 47896, C 70519, XOM 11850, MCD 43449, GE 12060). URL: https://www.financialriskforecasting.com/seminars/1.pdf . Handout labels these as the **latest** tickers; it does **not** supply complete CRSP historical ticker validity intervals. All entries remain **candidate / unverified**, not production-training mappings.
 - Added `build_stock_panel.py`: optional exploratory multi-stock merge of existing Xiu 3-characteristic imputed feature data with HerdingAI single-stock returns, using the candidate mappings. Uses calendar-month return labels with a consecutive-month guard, audits duplicate keys, and restricts feature months to 2000-01 through 2021-11 as a provisional research window. Writes `data/gkx_panel_exploratory_candidates_2000_2021.csv` with `mapping_status=candidate_UNVERIFIED`. **No output row counts validated yet**; the researcher must run the script locally. This is not an authorized validated training sample.
 - Current blocking requirement: verify PERMNO ↔ ticker historical match intervals and identity transitions, especially JPM/C/GE merger and reorganization histories, before any main experiment. Do not confuse evidence of a cross-sectional CRSP match at one date with proof of continuous identity.
+
+## Mandatory panel construction audit (user requirement — 2026-11-15)
+
+**DO NOT skip this audit when moving from exploratory candidate data to the official modeling panel.**
+
+1. Start from the stock-feature panel as the LEFT table. Join the monthly-return labels using a **LEFT MERGE**, not an inner merge, retaining unmatched feature-month observations for audit.
+2. Preserve the original stock-feature row count and identifiers through the audit; distinguish rows lacking any ticker/return match from rows whose following calendar-month return is missing or invalid. Do not silently discard either category.
+3. Report matched and unmatched counts and rates overall, **by ticker/PERMNO and by month (or year)**; inspect systematic gaps and selection/survivorship risk.
+4. Verify candidate ticker↔PERMNO identity and date validity before promoting observations to the official panel. Candidate evidence alone is insufficient.
+5. **Only after recording the audit**, explicitly select eligible observations with valid next-calendar-month targets; never impute unknown target returns with zero. Keep an auditable exclusion summary.
+6. Train and evaluate Elastic Net, Random Forest, and baseline on the **same eligible evaluation observations**.
+
+The current `build_stock_panel.py` uses an **inner merge for the exploratory-only panel**; it does NOT satisfy this mandatory final-data audit. Change/extend it before using the output for the main study.
