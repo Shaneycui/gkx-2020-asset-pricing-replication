@@ -85,7 +85,7 @@ The current `build_stock_panel.py` uses an **inner merge for the exploratory-onl
 
 ### Elastic Net — completed
 
-- Implementation in local `train_elastic_net_recursive.py`; **not yet uploaded to this GitHub repository** as of this update.
+- Implementation: `train_elastic_net_recursive.py`, uploaded to GitHub main on 2026-11-17 (from user-supplied current local script).
 - `l1_ratio=0.5`; ten log-spaced `alpha` candidates over [1e-4, 1e-1] (the ten-point grid is project-specific).
 - Overall 1987–2016 OOS R²: **+0.24952075885404934%**.
 - Local outputs: `data/elastic_net_recursive_yearly.csv` and `data/elastic_net_recursive_predictions.csv`.
@@ -93,7 +93,7 @@ The current `build_stock_panel.py` uses an **inner merge for the exploratory-onl
 
 ### Random Forest — completed
 
-- Local scripts: `train_random_forest_pilot.py`, `train_random_forest_full_1987.py`, and `train_random_forest_recursive.py`; **not yet uploaded to this GitHub repository** as of this update.
+- Scripts: `train_random_forest_pilot.py`, `train_random_forest_full_1987.py`, and `train_random_forest_recursive.py`, uploaded to GitHub main on 2026-11-17 from user-supplied files.
 - Recursive configuration: 50 trees per forest, max depth candidates 1–6, `max_features=3`, `min_samples_leaf=100`, `random_state=42`, `n_jobs=2`. Full historical training/validation observations (no subsampling in the recursive run).
 - Overall 1987–2016 OOS R²: **+0.3859393441365433%**.
 - 1987 OOS R² about **-0.7993%**; 1988 about **+1.2729%**; best depths 1 and 2 respectively. The whole 1987–1988 pilot recursive window combined R² about **+0.0320%**.
@@ -114,7 +114,7 @@ The current `build_stock_panel.py` uses an **inner merge for the exploratory-onl
 
 ### Next tasks (in priority order)
 
-1. Upload **exact current local Python scripts** through the researcher's own Git tooling (or attach the files here for GitHub upload); this connector cannot read the Windows PyCharm directory.
+1. **Completed 2026-11-17:** Four current Python modeling scripts uploaded from the researcher's conversation attachments. Keep GitHub synchronized with any later edits made in PyCharm.
 2. Develop `compare_models.py` to join predictions one-to-one on (`permno`, `DATE`), check that realized proxy labels agree, compare OOS R² and MSE on a common sample, and report annual performance.
 3. Compare forecast losses with appropriate time/dependence-aware inference (for example, monthly aggregated losses and HAC inference); don't treat all stock-months as independent observations.
 4. Audit target construction, point-in-time information, proxy/winsorization and missing/delisting-selection concerns; document precise limits of replicability.
