@@ -218,3 +218,9 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Large local research inputs, intermediate tables, and model predictions
+/data/
+
+# IDE metadata
+.idea/
