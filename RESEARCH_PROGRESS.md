@@ -1,6 +1,6 @@
 # Research Progress — Simplified GKX (2020) Replication
 
-Last updated: 2026-11-15
+Last updated: 2026-11-17
 
 **Research scope:** Reproduce selected empirical machine-learning asset-pricing methodology of Gu, Kelly, Xiu (2020) using 3 characteristics; this is not an exact replication of the paper's full dataset or all published results.
 
@@ -60,3 +60,66 @@ Previous conversational percentage estimates (e.g., ~55%) were informal, not a m
 6. Train and evaluate Elastic Net, Random Forest, and baseline on the **same eligible evaluation observations**.
 
 The current `build_stock_panel.py` uses an **inner merge for the exploratory-only panel**; it does NOT satisfy this mandatory final-data audit. Change/extend it before using the output for the main study.
+
+
+---
+
+## 2026-11-17 — Confirmed milestone: both recursive models completed
+
+**Status note:** This is the current verified experiment status and supersedes older "remaining work" and "immediate next action" sections above, which describe the earlier Yahoo/ticker-mapping exploration. The actual full-universe modeling target now uses the public **next-calendar-month mom1m return proxy**, *not* the limited Yahoo ticker panel. Earlier experiments remain useful as an independent cross-check and are not part of the main 4M-row modeling panel.
+
+### Modeling dataset and audit
+
+- Original Xiu characteristics source: `data/datashare.csv`, **4,117,300** stock-month records, 1957-01–2021-12.
+- Cross-sectional feature ranks normalized to [-1, 1] for `mom1m`, `bm`, and `mvel1`; month-median imputation, with a documented project-specific BM zero fallback for entirely missing months.
+- Full eligible modeling panel: `data/gkx_panel_mom1m_public.csv`, **4,078,842** stock-month records, 32,642 PERMNO identifiers, 1957–2021. Columns: `permno`, `DATE`, `mom1m_scaled`, `bm_scaled`, `mvel1_scaled`, `return_proxy`.
+- Return proxy: for a given stock-month, a shifted next-calendar-month raw `mom1m` value. Independent Yahoo checks for seven *candidate* ticker/PERMNO pairs showed correlation about **0.99581**, MAE about **0.00066** across 3,335 paired consecutive-month observations. These candidate mappings are not certified historical CRSP crosswalks.
+- **Research limitations:** This proxy is not the original CRSP excess-return target, may reflect upstream winsorization and missing/delisting exclusions, and does not remove potential survivorship, time-availability or mechanical-alignment concerns. Independent point-in-time/no-leakage audit remains outstanding. The original GKX full set of characteristics and macro interactions are not reproduced.
+
+### Evaluation design
+
+- Annual out-of-sample test years: **1987–2016** (30 years).
+- Expanding training history starting in 1957, rolling preceding 12-year validation window, yearly validation-based hyperparameter selection and re-fitting on all pre-test-year observations.
+- Both models produced **2,489,185** out-of-sample stock-month forecasts on the same eligible test period (prediction-key equality remains to be independently confirmed in comparison script).
+- OOS R-squared benchmark is **zero predicted return**, calculated as `1 - sum((actual - prediction)^2) / sum(actual^2)`.
+
+### Elastic Net — completed
+
+- Implementation in local `train_elastic_net_recursive.py`; **not yet uploaded to this GitHub repository** as of this update.
+- `l1_ratio=0.5`; ten log-spaced `alpha` candidates over [1e-4, 1e-1] (the ten-point grid is project-specific).
+- Overall 1987–2016 OOS R²: **+0.24952075885404934%**.
+- Local outputs: `data/elastic_net_recursive_yearly.csv` and `data/elastic_net_recursive_predictions.csv`.
+- Annual intercept and three feature coefficients were added to the *local source code for future runs*, but the completed 30-year historical output **does not yet contain those coefficients**. Do not claim they were retrospectively saved.
+
+### Random Forest — completed
+
+- Local scripts: `train_random_forest_pilot.py`, `train_random_forest_full_1987.py`, and `train_random_forest_recursive.py`; **not yet uploaded to this GitHub repository** as of this update.
+- Recursive configuration: 50 trees per forest, max depth candidates 1–6, `max_features=3`, `min_samples_leaf=100`, `random_state=42`, `n_jobs=2`. Full historical training/validation observations (no subsampling in the recursive run).
+- Overall 1987–2016 OOS R²: **+0.3859393441365433%**.
+- 1987 OOS R² about **-0.7993%**; 1988 about **+1.2729%**; best depths 1 and 2 respectively. The whole 1987–1988 pilot recursive window combined R² about **+0.0320%**.
+- Selected best depth was 6 in every year **2000–2011**, but 6 is also the largest candidate value; avoid claiming this is the unconstrained optimal depth.
+- Local outputs under `data/rf_recursive_50trees_leaf100/`: `rf_recursive_yearly.csv`, per-year `rf_validation_YYYY.csv`, per-year `rf_predictions_YYYY.csv`. Saved metrics include annual validation/test MSE, OOS R², depth, hyperparameters, MDI feature importance and runtime.
+- 2004 wall-clock log reads **29,544.6 seconds**, unusually high relative to surrounding years; cause unknown, do not presume market-year computational difficulty.
+
+### Preliminary model comparison (descriptive only)
+
+| Model | 1987–2016 overall OOS R² | Test predictions |
+|---|---:|---:|
+| Elastic Net | +0.2495% | 2,489,185 |
+| Random Forest | +0.3859% | 2,489,185 |
+
+- Random Forest's overall R² exceeds Elastic Net's by approximately **0.1364 percentage points**, under current distinct model configurations.
+- **No paired, dependence-robust significance test completed**; observed advantage is descriptive rather than a proven statistically significant model improvement.
+- Not a full replication of GKX Table A.5: RF uses 50 (not 300) trees and project-specific `min_samples_leaf=100`.
+
+### Next tasks (in priority order)
+
+1. Upload **exact current local Python scripts** through the researcher's own Git tooling (or attach the files here for GitHub upload); this connector cannot read the Windows PyCharm directory.
+2. Develop `compare_models.py` to join predictions one-to-one on (`permno`, `DATE`), check that realized proxy labels agree, compare OOS R² and MSE on a common sample, and report annual performance.
+3. Compare forecast losses with appropriate time/dependence-aware inference (for example, monthly aggregated losses and HAC inference); don't treat all stock-months as independent observations.
+4. Audit target construction, point-in-time information, proxy/winsorization and missing/delisting-selection concerns; document precise limits of replicability.
+5. Generate plots, feature-importance interpretation, reproducibility report and final research write-up.
+
+### Storage and reproducibility
+
+- Large `data/` files, model prediction CSVs, and `.venv/` should remain outside Git. **GitHub holds code and text research records, not the locally computed outputs.** Back up the result CSV files separately because the RF recursive run is computationally expensive.
