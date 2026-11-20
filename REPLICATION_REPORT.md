@@ -199,7 +199,18 @@ The completed recursive Elastic Net experiment uses scikit-learn's `ElasticNet` 
 The Tidy Finance article fixes the Elastic Net mixture at 0.5 and illustrates a two-point penalty grid containing (10^{-4}) and (10^{-1}). Our ten-point log-spaced grid is a project-specific refinement; it is not the exact two-point grid shown in that article.
 
 A further methodological distinction has been identified: GKX's online appendix describes an accelerated proximal-gradient (APG) optimization algorithm. The completed historical Elastic Net results were generated with scikit-learn's coordinate-descent solver, not APG. A separate APG implementation has been drafted for solver-fidelity testing, but it has not yet been confirmed as a completed 30-year run. The coordinate-descent results must not be relabelled as APG results.
-![Uploading image.png…]()
+
+### 4.1.1 Optimization Solver Robustness: APG versus Coordinate Descent
+
+To assess numerical robustness, we compared two implementations of Elastic Net: coordinate descent using scikit-learn and an independently implemented accelerated proximal gradient (APG) algorithm following the update structure described in Gu, Kelly, and Xiu (2020).
+
+Both implementations were evaluated over the 1987–2016 out-of-sample period, yielding 2,489,185 perfectly matched stock-month predictions. The realized return-proxy labels were identical across the two datasets, and both implementations selected the same numerical regularization parameter in all 30 test years.
+
+The pooled out-of-sample R² was 0.249521% for coordinate descent and 0.249536% for APG, a difference of approximately 0.000016 percentage points. The mean absolute difference between individual predictions was 1.263 × 10⁻⁶, while the maximum absolute difference was 9.125 × 10⁻⁵.
+
+All 30 APG annual models passed the recorded proximal fixed-point residual check. These findings indicate strong numerical agreement between the two implementations under the current experimental configuration.
+
+Nevertheless, the comparison does not establish exact equality of the optimization objectives or their solutions. Historical coordinate-descent coefficient estimates were not available for direct comparison, and the solvers use different convergence criteria. The results are therefore interpreted as evidence of numerical robustness rather than proof of exact computational equivalence.
 
 
 ### 4.2 Random Forest
