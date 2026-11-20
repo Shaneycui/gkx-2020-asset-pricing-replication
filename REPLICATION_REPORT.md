@@ -199,6 +199,8 @@ The completed recursive Elastic Net experiment uses scikit-learn's `ElasticNet` 
 The Tidy Finance article fixes the Elastic Net mixture at 0.5 and illustrates a two-point penalty grid containing (10^{-4}) and (10^{-1}). Our ten-point log-spaced grid is a project-specific refinement; it is not the exact two-point grid shown in that article.
 
 A further methodological distinction has been identified: GKX's online appendix describes an accelerated proximal-gradient (APG) optimization algorithm. The completed historical Elastic Net results were generated with scikit-learn's coordinate-descent solver, not APG. A separate APG implementation has been drafted for solver-fidelity testing, but it has not yet been confirmed as a completed 30-year run. The coordinate-descent results must not be relabelled as APG results.
+![Uploading image.png…]()
+
 
 ### 4.2 Random Forest
 
