@@ -2,7 +2,7 @@
 
 **A three-characteristic implementation based on public data**  
 **Project:** `Shaneycui/gkx-2020-asset-pricing-replication`  
-**Report status:** Preliminary computational report — not a full replication  
+**Report status:** Completed three-characteristic methodological replication; full GKX replication not claimed  
 **Version date:** 20 November 2026
 
 ---
@@ -13,7 +13,7 @@ This project implements a simplified empirical asset-pricing prediction exercise
 
 The implementation uses three cross-sectionally ranked firm characteristics — `mom1m`, `bm`, and `mvel1` — from the public characteristic file hosted by Dacheng Xiu. The resulting panel contains 4,078,842 eligible stock-month observations and 32,642 PERMNO identifiers. Because a matching CRSP excess-return panel was not available in the current project environment, the dependent variable is a **proxy** constructed from the following calendar month's raw `mom1m` value. This proxy is not equivalent to the CRSP total or excess return used in GKX.
 
-Using an expanding training sample, a rolling 12-year validation window, and annual model refitting, the completed 1987–2016 experiments produce 2,489,185 out-of-sample forecasts for each model. The pooled out-of-sample R-squared relative to a zero-return forecast is 0.2495% for Elastic Net and 0.3859% for Random Forest. The Random Forest's descriptive advantage is 0.1364 percentage points. No dependence-robust significance conclusion has yet been established.
+Using an expanding training sample, a rolling 12-year validation window, and annual model refitting, the 1987–2016 experiments produce 2,489,185 matched out-of-sample forecasts per model. Pooled zero-benchmark OOS R² is **0.249536%** for Elastic Net estimated with accelerated proximal gradient (APG), **0.249521%** for a coordinate-descent (CD) robustness benchmark, and **0.385939%** for Random Forest (RF). In a prespecified two-sided comparison of equal-weight monthly squared forecast losses, a GKX-style modified Diebold–Mariano (DM) statistic with 12-lag Newey–West HAC standard errors is **2.0860 (p = 0.036975)**, favoring RF at the unadjusted 5% level. Training-time RF mean decrease in impurity (MDI) assigns average importance of **67.44%** to `mom1m`, **22.53%** to `mvel1`, and **10.03%** to `bm` across 30 annual models.
 
 The results should therefore be interpreted as a **three-characteristic methodological replication and pipeline prototype**, not as a reproduction of GKX's original data, full predictor set, optimization procedures, or headline empirical findings.
 
@@ -30,7 +30,9 @@ The reference implementation for this project is Stefan Voigt's 2024 Tidy Financ
 The current project focuses on a deliberately restricted first experiment:
 
 - Three stock characteristics: `mom1m`, `bm`, and `mvel1`.
-- Two prediction methods: Elastic Net and Random Forest.
+- Two prediction methods: Elastic Net (APG primary; CD as numerical robustness benchmark) and Random Forest.
+- GKX-style modified DM inference on monthly paired prediction losses.
+- Descriptive annual RF MDI importance and selected-depth diagnostics.
 - Annual recursive/expanding estimation from 1987 through 2016.
 - A common stock-month test sample for both models.
 - Forecast accuracy relative to a zero-return benchmark.
@@ -183,35 +185,45 @@ The Tidy Finance article describes the same selection-then-refit logic.
 
 ## 4. Model specifications
 
-### 4.1 Elastic Net
+### 4.1 Elastic Net: APG primary, coordinate descent robustness
 
-The completed recursive Elastic Net experiment uses scikit-learn's `ElasticNet` estimator.
+Both solvers optimize Elastic Net with an intercept and three ranked characteristics. The common objective in this project is
 
-| Setting | Project value |
-|---|---|
-| Mixture parameter (`l1_ratio`) | 0.5 |
-| Candidate penalty values | 10 log-spaced values from (10^{-4}) to (10^{-1}) |
-| Selection metric | Validation MSE |
-| Intercept | Included |
-| Maximum iterations | 5,000 |
-| Solver | scikit-learn coordinate descent |
+\[
+\min_{b_0,\beta}\;\frac{1}{2N}\|y-b_0-X\beta\|_2^2
++\lambda(1-\rho)\|\beta\|_1+\frac{\lambda\rho}{2}\|\beta\|_2^2,
+\qquad \rho=0.5.
+\]
 
-The Tidy Finance article fixes the Elastic Net mixture at 0.5 and illustrates a two-point penalty grid containing (10^{-4}) and (10^{-1}). Our ten-point log-spaced grid is a project-specific refinement; it is not the exact two-point grid shown in that article.
+The ten penalty candidates are `np.logspace(-4, -1, 10)`; this finite grid is a **project choice**. Each annual test selects the penalty on the prior 12-year validation sample and refits on all observations strictly prior to the test year.
 
-A further methodological distinction has been identified: GKX's online appendix describes an accelerated proximal-gradient (APG) optimization algorithm. The completed historical Elastic Net results were generated with scikit-learn's coordinate-descent solver, not APG. A separate APG implementation has been drafted for solver-fidelity testing, but it has not yet been confirmed as a completed 30-year run. The coordinate-descent results must not be relabelled as APG results.
+| Setting | APG primary implementation | CD robustness benchmark |
+|---|---|---|
+| Mixing parameter | `rho=0.5` | `l1_ratio=0.5` |
+| Penalty candidates | Ten log-spaced values, 1e-4 to 1e-1 | Same numerical candidates |
+| Intercept | Centered/analytically recovered; unpenalized | `fit_intercept=True` |
+| Solver | Accelerated proximal gradient | scikit-learn coordinate descent |
+| Stopping parameters | `tol=1e-10`, `max_iter=20000` | `tol=1e-4`, `max_iter=5000` |
+| Out-of-sample years | 1987–2016 | 1987–2016 |
 
-### 4.1.1 Optimization Solver Robustness: APG versus Coordinate Descent
+The APG implementation uses the three-feature Gram matrix to compute prox-gradient updates efficiently. Its optimization and penalty grid follow the broad online-appendix framework, but details such as step-size selection, finite grid and convergence criterion remain **implementation choices**, not an assertion of exact identity with every GKX algorithmic setting.
 
-To assess numerical robustness, we compared two implementations of Elastic Net: coordinate descent using scikit-learn and an independently implemented accelerated proximal gradient (APG) algorithm following the update structure described in Gu, Kelly, and Xiu (2020).
+#### 4.1.1 Solver consistency: APG versus CD
 
-Both implementations were evaluated over the 1987–2016 out-of-sample period, yielding 2,489,185 perfectly matched stock-month predictions. The realized return-proxy labels were identical across the two datasets, and both implementations selected the same numerical regularization parameter in all 30 test years.
+A key-aligned comparison matched **2,489,185** forecasts, with zero unmatched stock-months and zero realized-label mismatches. Both solvers selected the same *numerical* penalty in **30/30** test years. All 30 APG annual outputs passed the *recorded* fixed-point residual check.
 
-The pooled out-of-sample R² was 0.249521% for coordinate descent and 0.249536% for APG, a difference of approximately 0.000016 percentage points. The mean absolute difference between individual predictions was 1.263 × 10⁻⁶, while the maximum absolute difference was 9.125 × 10⁻⁵.
+| Comparison item | Result |
+|---|---:|
+| CD pooled OOS R² | +0.249520758854% |
+| APG pooled OOS R² | +0.249536392766% |
+| APG minus CD OOS R² | +0.000015634 percentage points |
+| Mean absolute paired forecast difference | 1.26318949431e-6 |
+| RMSE of paired forecast differences | 8.79242829215e-6 |
+| Maximum absolute paired forecast difference | 9.12524972048e-5 |
+| Same selected numerical penalty | 30/30 years |
+| APG recorded residual criterion passed | 30/30 years |
 
-All 30 APG annual models passed the recorded proximal fixed-point residual check. These findings indicate strong numerical agreement between the two implementations under the current experimental configuration.
-
-Nevertheless, the comparison does not establish exact equality of the optimization objectives or their solutions. Historical coordinate-descent coefficient estimates were not available for direct comparison, and the solvers use different convergence criteria. The results are therefore interpreted as evidence of numerical robustness rather than proof of exact computational equivalence.
-
+This is strong **numerical prediction agreement**, not proof of identical optimizer iterates or exact objective solutions. The CD training script saves annual intercepts and coefficients in `data/elastic_net_recursive_yearly.csv`; the existing solver-comparison run did **not** complete a direct paired coefficient/objective-value comparison. Its historical message that CD coefficients were unavailable should not be interpreted as meaning the underlying CD yearly CSV lacks those columns. Different solver tolerances remain a plausible source of small discrepancies.
 
 ### 4.2 Random Forest
 
@@ -280,19 +292,19 @@ This supports a like-for-like descriptive comparison on the same stock-month tes
 
 ### 6.1 Overall performance, 1987–2016
 
-| Model | Forecast observations | Pooled OOS R² |
+| Model | Stock-month forecasts | Pooled OOS R² |
 |---|---:|---:|
-| Elastic Net | 2,489,185 | +0.249521% |
-| Random Forest | 2,489,185 | +0.385939% |
-| RF minus Elastic Net | Same sample | +0.136419 percentage points |
+| **Elastic Net (APG; primary)** | 2,489,185 | **+0.249536393%** |
+| Elastic Net (CD; robustness) | 2,489,185 | +0.249520759% |
+| **Random Forest (50 trees)** | 2,489,185 | **+0.385939344%** |
+| RF minus APG | Matched sample | **+0.136402951 percentage points** |
+| RF minus CD | Matched sample | +0.136418585 percentage points |
 
-Under the current proxy target and model configurations, Random Forest has a higher pooled OOS R² than Elastic Net by approximately 0.1364 percentage points.
-
-This difference is descriptive. It is not yet evidence of statistically significant superiority. The models also use different regularization/tree settings and have not both been brought into exact alignment with the original paper's optimizer and hyperparameter search.
+The pooled R² comparison is descriptive and **stock-month weighted** through the pooled sum of squared errors. The inferential test below uses a different estimand: the **equally weighted time-series mean of monthly cross-sectional loss differences**. These should not be conflated.
 
 ### 6.2 Annual performance
 
-The annual OOS R² values below were reported by the completed recursive runs. Values are percentages.
+The annual OOS R² values below are from the completed original CD-versus-RF recursive runs (CD entries generally round closely to APG but are **not** re-labelled APG). Values are percentages; APG annual details are stored separately in the APG output directory.
 
 | Year | Elastic Net | Random Forest |
 |---:|---:|---:|
@@ -329,41 +341,115 @@ The annual OOS R² values below were reported by the completed recursive runs. V
 
 The annual results show meaningful variation across years. Both models have negative OOS R² in several test years, including 2007–2008. A positive pooled OOS R² therefore does not mean the models outperform the zero benchmark in every year.
 
-### 6.3 Preliminary interpretation
+### 6.3 Interpretation of predictive performance
 
-Three restrained observations can be made:
+1. **Positive but small pooled gains:** all three models modestly beat the zero-return benchmark in pooled OOS R².
+2. **RF advantage is not universal:** there are annual negative model R² values and months when APG has lower mean squared loss.
+3. **Statistical evidence is conditional:** section 7 reports a 5%-level unadjusted result for the equal-month loss contrast, not a guarantee of superior portfolio performance, full-sample GKX replication, or robustness to all inference choices.
+4. **Reduced specification:** three characteristics and a return proxy omit the original empirical study's broader predictors, adjusted excess-return target and economic-value analysis.
 
-1. **Predictive gains are modest.** The pooled OOS R² values are positive but small relative to the zero-return benchmark.
-2. **The RF advantage is not uniform.** Random Forest performs better in many years but worse in others; the annual table does not show universal dominance.
-3. **The current feature set may be too narrow to reproduce the full GKX result.** Three characteristics omit much of the cross-sectional and macroeconomic information used in the original paper. The present results cannot isolate whether differences arise from the reduced feature set, target proxy, tuning grid, optimizer, RF configuration, or other data-processing differences.
+### 6.4 Random Forest variable importance (MDI)
 
-## 7. Statistical comparison and inference
+The RF annual output `data/rf_recursive_50trees_leaf100/rf_recursive_yearly.csv` records normalized training-time mean-decrease-in-impurity (MDI) contributions for all three features in the final refitted forest. The analysis aggregates annual importance using **equal weight per model year** (not weight by number of stocks).
 
-The comparison workflow also aggregates monthly squared forecast-loss differences. This is preferable to treating millions of stock-month observations as independent because observations within the same month and across adjacent months may be dependent.
+| Feature | Equal-year mean MDI | Annual minimum | Annual maximum | Years ranked #1 |
+|---|---:|---:|---:|---:|
+| `mom1m` | **0.674356 (67.44%)** | 0.5188 | 1.0000 | **30/30** |
+| `mvel1` | 0.225308 (22.53%) | 0.0000 | 0.3630 | 0/30 |
+| `bm` | 0.100336 (10.03%) | 0.0000 | 0.1428 | 0/30 |
 
-A Newey–West heteroskedasticity-and-autocorrelation-consistent (HAC) standard error procedure has been proposed for inference on the mean monthly loss differential. This is a project-level inferential extension; it should not be described as a procedure already completed or as an exact requirement of the Tidy Finance blog's code.
+In **1987, 1988, 1989, 2014 and 2015**, `mom1m` accounts for 100% of recorded MDI. Selected maximum depths in these years are **1, 2, 2, 1, 1**, respectively. In 1995, with depth 3, the approximate MDI allocation is **66.21%** `mom1m`, **21.37%** `mvel1`, and **12.42%** `bm`. The depth-selection pattern is descriptive: the six candidate depths are chosen by historical validation MSE, with 2000–2011 selecting depth 6.
 
-**Status:** the paired descriptive comparison is complete, but the HAC significance test has not yet been confirmed as successfully run and reviewed. Until that is done, no statistical-significance claim should be made about the RF–Elastic Net difference.
+**Interpretation boundary:** MDI is a *within-model, training-time* split-impurity metric. It is **not** the share of realized return variance explained, independent OOS feature value, a causal factor effect, or proof of macroeconomic regime dependence. Correlated predictors, shallow trees, a restricted three-feature choice set and changing expanding estimation windows influence these importances. The dominance of short-term reversal is qualitatively compatible with GKX's broader attention to price-trend signals but cannot reproduce their full-universe feature ranking. OOS permutation or ablation importance would require access to fitted forests or additional refitting; it has not been conducted.
+
+Artifacts: `data/rf_feature_importance_analysis/rf_mdi_summary.csv`, `rf_mdi_yearly.csv`, `rf_mdi_mean.png`, and `rf_mdi_by_year.png`.
+
+## 7. Statistical comparison and inference: GKX-style modified DM
+
+### 7.1 Cross-sectionally aggregated loss differential
+
+The completed principal test compares **Elastic Net (APG)** and **Random Forest** on the same 2,489,185 stock-month observations. Rather than treating individual stocks in the same month as independent statistical units, it first averages squared forecast errors cross-sectionally:
+
+\[
+MSFE_{m,t}=\frac{1}{N_t}\sum_{i=1}^{N_t}(y_{i,t}-\hat y_{i,t}^{(m)})^2,
+\qquad
+d_t=MSFE_{APG,t}-MSFE_{RF,t}.
+\]
+
+A positive `d_t` favors RF. The null and two-sided alternative are `H0: E[d_t] = 0` and `H1: E[d_t] != 0`. The modified DM-style statistic is
+
+\[
+DM_{NW}=\frac{\bar d}{SE_{NW}(\bar d)}.
+\]
+
+The Newey–West long-run variance estimator uses Bartlett weights and the centered monthly series. Two-sided p-values use the large-sample standard-normal approximation. **Twelve lags were chosen as the primary project specification**; zero and six lags are sensitivity checks. These choices should not be presented as verified identical to GKX's exact bandwidth/finite-sample correction. This is a **GKX-style cross-sectionally aggregated modified DM**, not an exact claim to reproduce the paper's entire multiple-model testing procedure.
+
+### 7.2 Main APG versus RF inference
+
+The 360 consecutive months from 1987-01 through 2016-12 contain 2,489,185 paired predictions. RF has a smaller cross-sectional monthly MSFE in **195** months; APG is better in **165** months; none are tied. This count is descriptive, not the test statistic.
+
+- Equal-month mean `APG MSFE - RF MSFE`: **+0.0000282605**.
+- Stock-month-weighted counterpart: **+0.0000324277**.
+
+| Newey–West lags | Modified DM z | HAC standard error | Two-sided p-value | 95% confidence interval for mean monthly loss difference |
+|---:|---:|---:|---:|---|
+| 0 | +3.0592 | 0.0000092379 | 0.002219 | [+0.0000101541, +0.0000463668] |
+| 6 | +2.3348 | 0.0000121039 | 0.019553 | [+0.0000045368, +0.0000519841] |
+| **12 (primary)** | **+2.0860** | **0.0000135474** | **0.036975** | **[+0.0000017076, +0.0000548133]** |
+
+The principal 12-lag comparison rejects equal average monthly forecast losses at the **unadjusted 5% level** in favor of RF; it does not reject at 1%. The conclusion assumes an adequate HAC large-sample approximation and does not constitute a multi-model familywise-error-adjusted claim.
+
+### 7.3 Alternative Elastic Net solver: CD versus RF
+
+Re-running the same loss-difference inference with the coordinate-descent Elastic Net benchmark gives:
+
+| Metric (12 lags) | APG vs RF (primary) | CD vs RF (robustness) |
+|---|---:|---:|
+| Mean monthly EN-minus-RF loss | +0.0000282605 | +0.0000282650 |
+| DM z | +2.0860 | +2.0864 |
+| Two-sided p-value | **0.036975** | **0.036938** |
+| Unadjusted 5%-level conclusion | RF lower average loss | RF lower average loss |
+
+This solver swap leaves the observed significance conclusion unchanged. It does **not** address the separate return-proxy, predictor-selection, tuned-hyperparameter or macroeconomic-regime limitations.
+
+Files: `data/apg_rf_significance/modified_dm/apg_rf_modified_dm.csv`, `apg_rf_modified_dm_report.md`, and `data/model_comparison/comparison_hac_results.csv`.
 
 ## 8. Reproducibility and implementation inventory
 
-The principal scripts and their roles are:
+Scripts used in the three-characteristic workflow (some reside **only on the local Windows project**, not necessarily in the GitHub default branch):
 
-| Script | Role |
+| Script | Role / completion |
 |---|---|
-| `preprocess_features_stream.py` | Cross-sectional monthly ranking and scaling of the three characteristics |
-| `impute_features.py` | Monthly median imputation and documented all-missing fallback |
-| `validate_imputed_features.py` | Validate the saved feature panel |
-| `validate_mom1m_returns.py` | Independently test candidate timing alignment against external returns |
-| `build_gkx_full_panel.py` | Build the eligible full-universe proxy-return panel and audit exclusions |
-| `split_gkx_panel.py` | Check time-based sample partitions |
-| `train_elastic_net_recursive.py` | Completed 1987–2016 Elastic Net recursive experiment using coordinate descent |
-| `train_random_forest_recursive.py` | Completed 1987–2016 Random Forest recursive experiment |
-| `compare_models.py` | One-to-one paired prediction comparison and annual/monthly metrics |
-| `test_model_significance.py` | Planned HAC inference on monthly loss differences |
-| `train_elastic_net_apg_recursive.py` | Draft APG solver branch; not yet a confirmed completed full-period run |
+| `preprocess_features_stream.py` | Monthly cross-sectional ranking/scaling |
+| `impute_features.py` | Monthly median imputation with documented all-missing fallback |
+| `validate_imputed_features.py` | Feature-panel integrity checks |
+| `validate_mom1m_returns.py` | Independent seven-pair Yahoo return proxy alignment check |
+| `build_gkx_full_panel.py` | Full-universe eligible stock-month panel with proxy target |
+| `audit_gkx_features_labels.py` | Raw feature coverage and three-offset mechanical target diagnostics |
+| `split_gkx_panel.py` | Temporal partition audit |
+| `train_elastic_net_recursive.py` | 30-year CD benchmark; annual coefficients and forecasts |
+| `train_elastic_net_apg_recursive.py` | **Completed** 30-year APG; annual tuning, convergence and forecasts |
+| `compare_elastic_net_solvers.py` | **Completed** 2,489,185-key APG-versus-CD forecast and penalty comparison |
+| `train_random_forest_recursive.py` | **Completed** 30-year RF; predictions, depth and yearly MDI |
+| `compare_models.py` | Initial CD-vs-RF matched-sample and monthly loss comparison |
+| `test_model_significance-v2.py` | Completed CD-vs-RF 0/6/12-lag HAC inference |
+| `compare_apg_rf_significance.py` | Completed APG-vs-RF matched forecasts, monthly loss series |
+| `test_modified_dm_apg_rf.py` | **Completed** GKX-style modified DM with 0/6/12-lag HAC and Markdown results |
+| `analyze_rf_feature_importance.py` | **Completed** 30-model RF annual MDI summary and plots |
 
-Large source data, processed panels, prediction CSVs, and fitted outputs are stored locally under `data/` and are not backed up by the GitHub code repository. Reproducibility requires preserving those files separately and recording raw-file hashes, software versions, and commit identifiers.
+Principal experiment artifacts (local, not assumed available in GitHub):
+
+- `data/gkx_panel_mom1m_public.csv`: 4,078,842 eligible rows and three scaled features.
+- `data/elastic_net_recursive_yearly.csv` and `data/elastic_net_recursive_predictions.csv`: CD.
+- `data/elastic_net_apg_recursive/`: APG yearly summary and per-year validation/predictions.
+- `data/elastic_net_solver_comparison/`: solver agreement metrics.
+- `data/rf_recursive_50trees_leaf100/`: RF yearly summary and per-year predictions.
+- `data/model_comparison/`: CD vs RF, including HAC sensitivity.
+- `data/apg_rf_significance/`: APG vs RF comparison and `modified_dm/` outputs.
+- `data/rf_feature_importance_analysis/`: annual MDI summary/plots.
+- `data/feature_label_audit/`: source-characteristic completeness and mechanical alignment checks.
+
+**Re-running:** preserve input files and locally generated scripts, use one environment and consistent package versions, and run data construction → model fitting → model comparisons → modified DM → MDI. The comparison, DM and MDI scripts do not refit the models. Record hashes for `datashare.csv` and the eligible panel, environment versions, seeds and the exact repository commit before an external reproducibility claim. Some script/output files have not yet been committed or backed up remotely.
 
 ## 9. Limitations and threats to interpretation
 
@@ -381,38 +467,37 @@ Only three characteristics are included. The original design uses a much broader
 
 The rank transformation formula differs slightly from the displayed formula in the Tidy Finance article. The median-imputation and all-missing fallback are documented, but the full original preprocessing pipeline has not been reproduced.
 
-### 9.4 Hyperparameter and solver differences
+### 9.4 Hyperparameter and solver fidelity
 
-The Elastic Net uses a ten-value penalty grid and coordinate descent in the completed run; the APG version remains a separate validation task. The Random Forest uses 50 trees, fixed `max_features=3`, and `min_samples_leaf=100`, rather than the original 300-tree setup and broader tuning described in the reference material.
+The completed APG follows the appendix-inspired update structure but uses project-specific penalty candidates, step size and stopping rules. A separate CD implementation provides numerical cross-checks, not proof of exact coefficient equality. The Random Forest has **50 trees**, `max_features=3` (all available features considered for splitting), and `min_samples_leaf=100`, rather than the reported 300-tree and broader `max_features` search of the original study.
 
 ### 9.5 Statistical uncertainty
 
-The RF's higher pooled OOS R² is a descriptive result. Monthly dependence-aware inference is still pending. No claim of statistically significant superiority is warranted.
+The **primary 12-lag modified DM p-value of 0.036975** is an unadjusted, two-sided approximate p-value for an equal-month average loss differential, not a test of the pooled OOS R² difference itself. It is near the 5% threshold and depends on lag choice, time-series assumptions and the restricted model specification. There is no comprehensive multiple-testing adjustment or independent block-bootstrap/subperiod robustness analysis.
 
 ### 9.6 Economic value not yet tested
 
 The current report evaluates prediction errors only. It does not yet reproduce the paper's monthly decile sorts, value-weighted or equal-weighted portfolios, long-short strategy, transaction-cost analysis, or investment performance evaluation.
 
-## 10. Next steps
+## 10. Remaining work (not required to document the completed three-feature exercise)
 
-The next steps are ordered to address the most consequential threats first.
+The main forecast, solver comparison, modified DM, and descriptive MDI analyses are now **completed**. Remaining issues for stronger scientific equivalence or further research are:
 
-1. **Audit the proxy target.** Establish the precise timing, construction, winsorization, missingness, and relationship between raw `mom1m` and realized returns. Where possible, obtain an independently sourced CRSP-compatible return panel.
-2. **Reconcile the rank transform.** Decide whether to adopt the Tidy Finance min/max-rank transformation or retain the current (2rank/(n+1)-1) formula, and quantify the effect.
-3. **Validate APG.** Compare APG and coordinate descent on the exact same Elastic Net objective, including intercept handling, loss normalization, penalty scaling, convergence tolerance, and candidate `lambda` grid. Do not overwrite the completed coordinate-descent benchmark.
-4. **Improve RF fidelity.** Increase tree count and implement a defensible tuning grid consistent with the original appendix, subject to computational feasibility.
-5. **Complete paired inference.** Run and review HAC inference on monthly loss differences, with lag-sensitivity checks.
-6. **Expand predictors.** Add further firm characteristics and, in a later stage, macroeconomic predictors and interactions.
-7. **Evaluate economic value.** Construct monthly forecast-sorted portfolios and evaluate realized returns, risk, turnover, and transaction costs.
-8. **Improve reproducibility.** Archive input hashes, package versions, model configurations, validation results, predictions, and exact code commits.
+1. **Return-label and point-in-time audit:** establish source `mom1m` construction, winsorization, delisting handling, stock ID correspondence, predictor release lags and CRSP-compatible *excess-return* targets. The prior seven-stock Yahoo alignment (correlation ~0.99581; MAE ~0.00066) is supportive, not certification of all stock-months.
+2. **Direct optimization audit:** pair saved CD and APG coefficients/intercepts, compute objective values, and examine stopping tolerances, including the final APG fixed-point residual criterion.
+3. **Preprocessing sensitivity:** evaluate the impact of the project's bounded rank formula versus the reference alternative, especially ties and missing values.
+4. **Inference sensitivity:** consider block bootstrap, subperiod DM tests, and prespecified multiple-testing adjustments if the comparison family is expanded.
+5. **OOS importance and economics:** if scientifically valuable, refit or preserve fitted forests for out-of-sample permutation/ablation importance; separately study portfolio sorts, turnover and transaction costs.
+6. **Longer-term expansion, not part of the present report:** richer company characteristics, macro predictors and interactions; revisit RF 300-tree and random-subset hyperparameter settings once input dimensionality justifies it.
+7. **Reproducibility packaging:** commit locally verified scripts, document environment versions, archive hashes and accessible result summaries without uploading licensed or overly large underlying data without appropriate rights.
 
 ## 11. Conclusion
 
-The project has completed a substantial end-to-end computational exercise: a public-data feature pipeline, a large eligible stock-month panel, annual recursive Elastic Net and Random Forest forecasts for 1987–2016, and a paired comparison on 2.49 million common out-of-sample observations.
+This project completes an end-to-end **three-characteristic methodological replication** inspired by GKX (2020): reproducible preprocessing, a 4,078,842-row eligible stock-month panel, 30 annual expanding-window predictions for two modeling methods, a 30-year APG versus CD numerical check, an APG-versus-RF GKX-style modified DM test, and descriptive RF variable-importance analysis.
 
-Within this simplified design, Random Forest achieves a pooled OOS R² of 0.3859%, compared with 0.2495% for Elastic Net, both measured against a zero-return forecast. This is an encouraging engineering and research milestone, but it is not yet evidence that the original GKX conclusions have been reproduced. The proxy target, reduced predictor set, implementation differences, and pending statistical inference materially constrain interpretation.
+On 2,489,185 matched OOS stock-month forecasts from 1987–2016, RF's pooled OOS R² is **+0.385939%**, versus **+0.249536%** for APG Elastic Net. The primary 12-month Newey–West modified-DM-style test detects lower equal-month average squared forecast loss for RF (**z = 2.0860, two-sided p = 0.036975**), at the unadjusted 5% significance level. The conclusion is essentially unchanged under the CD substitution. Among the *three available predictors*, `mom1m` dominates training-time RF MDI (mean **67.44%**, top in **30/30** years).
 
-The most defensible description at this stage is: **a transparent, three-characteristic methodological replication prototype inspired by GKX (2020), with completed recursive model comparisons and clearly documented deviations from the original empirical design.**
+These are meaningful completed **methodological and computational results**, but are conditional on the `mom1m` return proxy, only three characteristics, approximate original hyperparameters, and limited economic/robustness analysis. **This document does not claim to reproduce GKX's full predictor universe, original CRSP excess-return outcomes or headline empirical performance.**
 
 ---
 
