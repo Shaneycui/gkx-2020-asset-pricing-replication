@@ -224,12 +224,6 @@ Historical practice files in Phases 1–4 remain listed for their learning value
 
 **Do not commit large, licensed or uncontrolled raw data.** All outputs in `data/` are ignored by `.gitignore`. Back up numerical results outside GitHub and record the original source hash/versions before a reproducibility claim.
 
-### Research restrictions and remaining tasks
-
-**Completed:** prediction experiments, matched CD/APG/RF comparison, 0/6/12-lag modified DM, descriptive RF MDI, and readable research documentation.
-
-**Remaining:** upload remaining auxiliary validation scripts, perform a clean-clone rerun, independently audit `mom1m` timing and CRSP equivalence, compare APG and CD objectives/coefficients if needed, preserve environment versions and data hashes, and consider better-target/higher-dimensional follow-up studies. The original paper's macro interactions and portfolio economic evaluation are outside this three-feature run.
-
 ## Related documentation
 
 - [REPLICATION_WALKTHROUGH.md](REPLICATION_WALKTHROUGH.md) — readable code-interleaved tutorial.
