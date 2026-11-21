@@ -2,7 +2,7 @@
 
 I built a small replication of Gu, Kelly, and Xiu (2020), *Empirical Asset Pricing via Machine Learning*, to understand their prediction workflow. Instead of using the full predictor set, I focus on three stock characteristics: `mom1m` (short-term reversal), `bm` (book-to-market), and `mvel1` (size).
 
-**Start here:** [Read the step-by-step walkthrough with Python examples](REPLICATION_WALKTHROUGH.md). The format is inspired by [Tidy Finance's GKX replication post](https://blog.tidy-finance.org/posts/gu-kelly-xiu-replication/), but the code and findings are from this project.
+**Start here:** [Read the step-by-step walkthrough with Python examples](REPLICATION_WALKTHROUGH.md).
 
 ## Results, 1987–2016
 
