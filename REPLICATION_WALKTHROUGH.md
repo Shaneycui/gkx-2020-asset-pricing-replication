@@ -39,7 +39,7 @@ df["return_proxy"] = df.groupby("permno")["mom1m"].shift(-1)
 
 Only targets from the **immediately following calendar month** are kept, leaving **4,078,842** usable records. I checked this alignment against external Yahoo-derived monthly returns for seven candidate stock mappings (3,335 observations; correlation ~0.99581; MAE ~0.00066).
 
-**Lesson learned:** matching `return_proxy[t]` to raw `mom1m[t+1]` simply confirms the code's shift. It does **not** independently establish CRSP-like total/excess returns. Historical ticker/PERMNO identity, delistings and point-in-time availability remain caveats.
+**What I am still checking:** Is Xiu's raw `mom1m` a modified historical monthly return? Was the value used as `return_proxy[t]` actually observable *after* the predictors at time `t`? The independent return comparison is encouraging, but matching a shifted column to itself is only a mechanical consistency check. I cannot yet claim that the proxy is identical to CRSP total or excess returns, or that its information timing is fully verified. Historical ticker/PERMNO identity and delisting treatment also matter.
 
 ## 3. Training without looking forward
 
@@ -75,7 +75,7 @@ beta = np.sign(z) * np.maximum(np.abs(z) - threshold, 0) / (
 )
 ```
 
-The two solvers selected the same penalty in all **30** years. Across **2,489,185** matched predictions, their mean absolute difference was **1.26 × 10⁻⁶**. That is reassuring numerical agreement, though the solvers have different stopping rules.
+I kept `rho=0.5`, but chose a ten-point penalty grid, `max_iter=20000` and `tol=1e-10` for APG. Those are **my tuning and numerical choices**, not parameters copied unchanged from GKX. The two solvers selected the same penalty in all **30** years. Across **2,489,185** matched predictions, their mean absolute difference was **1.26 × 10⁻⁶**. That is reassuring numerical agreement, though the solvers have different stopping rules.
 
 ## 5. Random Forest
 
@@ -94,7 +94,7 @@ for depth in [1, 2, 3, 4, 5, 6]:
 
 [Complete RF training script](train_random_forest_recursive.py).
 
-These are **simplified project parameters**, not the original paper's complete RF search. With three predictors and `max_features=3`, all three variables are eligible for each split.
+The original study's RF configuration differs notably: its reference appendix describes **300 trees** and a much broader predictor/split search. My 50-tree run fixes `min_samples_leaf=100` and tests depths 1–6. These are **simplified project parameters**, not the original paper's complete RF search. With three predictors and `max_features=3`, all three variables are eligible for each split.
 
 ## 6. Out-of-sample results
 
@@ -125,7 +125,7 @@ A positive difference favors RF. A Newey–West HAC standard error accounts for 
 | 6 | +2.3348 | 0.019553 |
 | **12** | **+2.0860** | **0.036975** |
 
-RF has lower monthly mean squared loss in **195** of 360 months. At 12 lags, the difference is significant at the **unadjusted 5% level**, under the chosen large-sample test assumptions.
+RF has lower monthly mean squared loss in **195** of 360 months. At 12 lags, the difference is significant at the **unadjusted 5% level**, under the chosen large-sample test assumptions. The code uses cross-sectional monthly loss averages and a normal-approximation HAC test; this is *GKX-style* modified DM, not a claim to reproduce all of GKX's finite-sample or **multiple-comparison/Bonferroni** procedures.
 
 ## 8. Which features mattered?
 
@@ -141,7 +141,18 @@ I used the Random Forest's training-time mean decrease in impurity (MDI) scores 
 
 **Lesson learned:** MDI measures relative splits in a fitted forest. It does **not** mean `mom1m` explains 67% of stock-return variation or prove macroeconomic state dependence.
 
-## 9. What this project establishes
+## 9. Notes I would give another student
+
+The main lessons from my replication notes are easy to miss if one only reads the final R² numbers:
+
+- **Features versus target:** `mom1m`, `bm`, and `mvel1` are useful starting characteristics, but three inputs leave out much of the economic information in GKX. I have **not included interactions between macroeconomic predictors and stock characteristics**.
+- **Model settings matter:** the sample split follows the core annual GKX design, while the small feature set, APG stopping rule and several RF hyperparameters reflect my own choices. A method inspired by a paper is not automatically a parameter-for-parameter reproduction.
+- **Significance has a scope:** the comparison tests monthly *squared forecast errors*, not the profitability of an investment strategy; the primary HAC specification uses 12 lags and reports an unadjusted p-value.
+- **Be precise about `mom1m`:** in this project it is a short-term reversal/one-month return characteristic. It should not be casually described as a standard 12-month momentum signal. I still need stronger independent verification of the next-month return proxy.
+
+The remaining candidate variables recorded in my notes are `mom12m` (medium-term momentum), `beta` (market exposure), `idiovol` (idiosyncratic volatility), `turn` (turnover), and `agr` (asset growth). These are **possible next experiments**, not inputs used for the reported results.
+
+## 10. What this project establishes
 
 I completed a three-feature forecasting workflow: preparing a large panel, using a time-respecting train/validation/test split, fitting Elastic Net and RF, checking solver consistency, testing monthly loss differences, and interpreting RF splits.
 
