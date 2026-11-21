@@ -93,7 +93,7 @@ df["return_proxy"] = df.groupby("permno")["mom1m"].shift(-1)
 
 Only targets from the **immediately following calendar month** are kept, leaving **4,078,842** usable records. I checked this alignment against external Yahoo-derived monthly returns for seven candidate stock mappings (3,335 observations; correlation ~0.99581; MAE ~0.00066).
 
-**What I am still checking:** Is Xiu's raw `mom1m` a modified historical monthly return? Was the value used as `return_proxy[t]` actually observable *after* the predictors at time `t`? The independent return comparison is encouraging, but matching a shifted column to itself is only a mechanical consistency check. I cannot yet claim that the proxy is identical to CRSP total or excess returns, or that its information timing is fully verified. Historical ticker/PERMNO identity and delisting treatment also matter.
+**What I am still checking:**  The independent return comparison is encouraging, but matching a shifted column to itself is only a mechanical consistency check. I cannot yet claim that the proxy is identical to CRSP total or excess returns, or that its information timing is fully verified. Historical ticker/PERMNO identity and delisting treatment also matter.
 
 ## 3. Training without looking forward
 
