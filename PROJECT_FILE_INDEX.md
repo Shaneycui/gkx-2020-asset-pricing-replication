@@ -14,7 +14,7 @@ This is a **research and learning history**, not an assertion that every named f
 - **R — Recorded:** file or work was explicitly mentioned in past chat, PyCharm screenshots, or project progress notes; source content/current repository presence has **not** been independently checked here.
 - **V — Run verified:** a result, log, or validation was supplied in the conversation, but this does not imply the script is currently uploaded.
 - **D — Draft / pending:** provided as a new draft or planned analysis; no finished end-to-end result confirmed.
-- **? — Tentative name:** name/use appeared in prior conversational inventory, but existence and precise behavior need verification against the local folder. Do **not** cite these as verified project artifacts.
+
 
 **Important:** `data/` is Git-ignored. GitHub code/docs do **not** back up the processed data or the long-running model outputs. File paths below are relative to the project's local root, except where indicated.
 
