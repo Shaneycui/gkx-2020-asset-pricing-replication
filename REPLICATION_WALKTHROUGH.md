@@ -206,7 +206,7 @@ The main lessons from my replication notes are easy to miss if one only reads th
 
 The remaining candidate variables recorded in my notes are `mom12m` (medium-term momentum), `beta` (market exposure), `idiovol` (idiosyncratic volatility), `turn` (turnover), and `agr` (asset growth). These are **possible next experiments**, not inputs used for the reported results.
 
-## 10. Questions I would ask about this replication
+## 10. Questions for further investigation
 
 ### Why only three characteristics?
 
