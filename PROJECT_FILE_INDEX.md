@@ -189,7 +189,6 @@ MDI is **training-time normalized split-impurity importance**, not the percentag
 | [`REPLICATION_REPORT.md`](REPLICATION_REPORT.md) | Detailed final three-characteristic research report: APG/CD/RF, OOS R², modified DM, MDI, caveats. | **G** |
 | [`REPRODUCIBILITY.md`](REPRODUCIBILITY.md) | Environment setup, output conventions, code availability audit and checkpoints. | **G** |
 | [`requirements.txt`](requirements.txt) | Dependency compatibility ranges, **not** a fixed original environment lock. | **G** |
-| [`preprocess_features_stream.py`](preprocess_features_stream.py) and [`impute_features.py`](impute_features.py) | User-supplied actual locally used sources uploaded on Nov 21, replacing tutorial-only pseudocode references. | **G/V** |
 | [`DATA_SOURCES.md`](DATA_SOURCES.md) / [`RESEARCH_PROGRESS.md`](RESEARCH_PROGRESS.md) | Earlier provenance / historical experiment log; **some older status headings are superseded by the current report and this index**. | **G** |
 
 **Reproducibility status:** the six additional original local scripts were committed on 21 November 2026: the main proxy-panel constructor, APG trainer, solver comparison, APG/RF forecast comparison, modified-DM test, and RF MDI analysis. Auxiliary validation scripts and historical CD/RF comparison are still absent. Main workflow code is present, but the full pipeline still needs a clean-environment rerun with documented data hashes and package versions.
