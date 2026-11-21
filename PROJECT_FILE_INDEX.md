@@ -71,15 +71,12 @@ CD predictions           APG predictions              RF predictions
 
 | Python file | Purpose / 作用 | Main input → output | Status |
 |---|---|---|---|
-| `inspect_data.py` | Inspect raw Xiu feature columns, identifiers, dates, counts. | `datashare.csv` → console diagnostics | R, ? precise name |
+| `inspect_data.py` | Inspect raw Xiu feature columns, identifiers, dates, counts. | `datashare.csv` → console diagnostics | R |
 | `inspect_returns.py` | Inspect the public independent monthly-return CSV, equity subset, coverage. | `monthly_returns_by_ticker.csv` → diagnostics | R |
-| `validate_returns.py` | Basic returns sanity checks; precise implementation requires source inspection. | monthly returns → checks | R, ? |
+| `validate_returns.py` | Basic returns sanity checks; precise implementation requires source inspection. | monthly returns → checks | R |
 | `match_aapl.py` | Practice PERMNO filtering, calendar-month alignment, one-to-one merges for AAPL. | raw features + AAPL returns → paired observations | R |
 | `inspect_mom1m_outlier.py` | Check outlying raw `mom1m` and monthly 1%/99% winsorization behavior. | `datashare.csv` → outlier diagnostics | R/V |
-| `practice_groupby.py` | Learn monthly `groupby`, `rank`, `transform`, rank-to-[-1,1] normalization. | small practice data → console output | R |
-| `practice_month_buffer.py` | Prototype preserving an incomplete final month across CSV chunks. | chunked sample → processed whole months | R/V |
-| `practice_chunk_boundary.py` | Investigate CSV chunk/month boundary conditions. | practice inputs → diagnostics | R, source not inspected |
-| `practice_incremental_write.py` | Practice append/incremental CSV writing. | practice inputs → example CSV | R, source not inspected |
+
 
 These scripts explain the *learning path*. They are not the validated final data pipeline.
 
