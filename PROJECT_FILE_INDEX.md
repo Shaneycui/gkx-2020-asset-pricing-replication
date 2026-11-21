@@ -22,9 +22,9 @@ This is a **research and learning history**, not an assertion that every named f
 
 **Completed local research:** three-feature preprocessing, audited proxy panel, 1987–2016 expanding-window CD Elastic Net, APG Elastic Net, 50-tree Random Forest, matched forecasts, APG-vs-CD numerical consistency, APG-vs-RF modified-DM-style inference, and annual RF MDI analysis. **A locally completed experiment is not the same as a GitHub-committed script.**
 
-**GitHub now contains:** original `preprocess_features_stream.py` and `impute_features.py`; CD and RF training scripts; README, walkthrough, full report, data provenance, progress log, reproducibility guide, and requirements. The GitHub tree was checked before this update.
+**GitHub now contains:** original feature preprocessing, final proxy-panel constructor, CD and APG Elastic Net trainers, RF trainer, APG/CD solver comparison, APG/RF significance scripts, RF MDI analysis, and the research/reporting documents. The GitHub tree was checked before this update.
 
-**Still local-only / not verified on `main`:** the final full-panel builder, APG trainer, solver-comparison code, RF MDI script, main modified-DM scripts, and several validation tools. Thus GitHub is **not yet a complete fresh-clone-to-results pipeline**. The `data/` directory is ignored; no large raw or forecast CSVs are stored in GitHub.
+**Still local-only / not verified on `main`:** a few auxiliary validation tools and historical CD/RF comparison scripts. The main workflow scripts are now present, but a clean-clone end-to-end reproduction has **not** been independently executed. The `data/` directory is ignored; no large raw or forecast CSVs are stored in GitHub.
 
 ### Current experiment in one diagram
 
@@ -40,24 +40,24 @@ impute_features.py                        [G/V]
     -> data/gkx_features_3char_imputed.csv
     |
     v
-build_gkx_full_panel.py                   [V, local only]
+build_gkx_full_panel.py                   [G/V]
     -> data/gkx_panel_mom1m_public.csv (4,078,842 eligible rows)
     |
     +-------------------------+---------------------------+
     |                         |                           |
     v                         v                           v
 train_elastic_net_       train_elastic_net_        train_random_forest_
-recursive.py [G/V]      apg_recursive.py [V]     recursive.py [G/V]
+recursive.py [G/V]      apg_recursive.py [G/V]     recursive.py [G/V]
     |                         |                           |
     v                         v                           v
 CD predictions           APG predictions              RF predictions
     |                         |                           |
     +--- compare_elastic_     +--- compare_apg_rf_ --------+
-         net_solvers.py [V]       significance.py [V]     |
+         net_solvers.py [G/V]       significance.py [G/V]     |
                                      |                    |
                                      v                    v
                           test_modified_dm_       analyze_rf_feature_
-                          apg_rf.py [V]           importance.py [V]
+                          apg_rf.py [G/V]           importance.py [G/V]
                                      |                    |
                                      v                    v
                            Modified DM HAC        Annual MDI and plots
@@ -112,7 +112,7 @@ These scripts explain the *learning path*. They are not the validated final data
 
 | Python file | Purpose / 作用 | Main input → output | Status |
 |---|---|---|---|
-| `build_gkx_full_panel.py` | Preserve/audit feature-to-return matches and select stock-months with an available next-calendar-month return proxy; **no ticker mapping required** for the main panel. | imputed features + raw `mom1m` → `data/gkx_panel_mom1m_public.csv` and `data/gkx_panel_mom1m_audit_by_year.csv` | R/V |
+| [`build_gkx_full_panel.py`](build_gkx_full_panel.py) | Preserve/audit feature-to-return matches and select stock-months with an available next-calendar-month return proxy; **no ticker mapping required** for the main panel. | imputed features + raw `mom1m` → `data/gkx_panel_mom1m_public.csv` and `data/gkx_panel_mom1m_audit_by_year.csv` | **G/V** |
 | `split_gkx_panel.py` | Verify chronological Training/Validation/Test partition boundaries and counts. | eligible panel → split diagnostics | R/V |
 
 Eligible panel: **4,078,842** rows, **32,642** distinct PERMNOs, six columns: `permno`, `DATE`, `mom1m_scaled`, `bm_scaled`, `mvel1_scaled`, `return_proxy`. About **38,458** feature records lack the next-calendar-month return proxy and are excluded after audit, not imputed.
@@ -145,8 +145,8 @@ Initial fixed split checked: Training 1957–1986, Validation 1987–1999, Testi
 | `compare_models.py` | Audits matched CD/RF stock-month keys and labels; saves overall, annual and monthly comparison to `data/model_comparison/`. | **V** — local run, not on `main` |
 | `test_model_significance.py` | An earlier significance-script filename; see next row for the **confirmed completed** implementation. | **R** — several historical drafts; do not assume every version produced final output |
 | `test_model_significance-v2.py` | Completed Newey–West/Bartlett HAC inference for **CD versus RF**, 0/6/12 monthly lags. | **V** — output recorded, not on `main` |
-| `compare_apg_rf_significance.py` | Loads all 30 APG and RF annual forecasts; validates `permno`/`DATE` and labels; saves pooled, annual and monthly losses in `data/apg_rf_significance/`. | **V** — completed local run, not on `main` |
-| `test_modified_dm_apg_rf.py` | Completed GKX-style modified DM on 360 monthly cross-sectional MSFE differences, Bartlett/Newey–West 0/6/12 lags. | **V** — completed local run, not on `main` |
+| [`compare_apg_rf_significance.py`](compare_apg_rf_significance.py) | Loads all 30 APG and RF annual forecasts; validates `permno`/`DATE` and labels; saves pooled, annual and monthly losses in `data/apg_rf_significance/`. | **G/V** — source committed; completed local run |
+| [`test_modified_dm_apg_rf.py`](test_modified_dm_apg_rf.py) | Completed GKX-style modified DM on 360 monthly cross-sectional MSFE differences, Bartlett/Newey–West 0/6/12 lags. | **V** — completed local run, not on `main` |
 
 **Main APG-versus-RF test (1987–2016):** 360 consecutive months; 2,489,185 matched forecasts; 195 RF-winning months, 165 APG-winning months. Mean equal-month `MSFE_APG - MSFE_RF` = **+0.0000282605** (stock-month-weighted counterpart: **+0.0000324277**).
 
@@ -164,8 +164,8 @@ Initial fixed split checked: Training 1957–1986, Validation 1987–1999, Testi
 
 | File | Role / outputs | Status |
 |---|---|---|
-| `train_elastic_net_apg_recursive.py` | Completed all 30 APG annual train/validation/refit/prediction runs, separate `data/elastic_net_apg_recursive/` outputs. | **V** — completed local run, **not committed** |
-| `compare_elastic_net_solvers.py` | One-to-one compare of all APG/CD forecasts and selected numerical penalties, save `data/elastic_net_solver_comparison/`. | **V** — completed local run, **not committed** |
+| [`train_elastic_net_apg_recursive.py`](train_elastic_net_apg_recursive.py) | Completed all 30 APG annual train/validation/refit/prediction runs, separate `data/elastic_net_apg_recursive/` outputs. | **G/V** — source committed; completed local run |
+| [`compare_elastic_net_solvers.py`](compare_elastic_net_solvers.py) | One-to-one compare of all APG/CD forecasts and selected numerical penalties, save `data/elastic_net_solver_comparison/`. | **V** — completed local run, **not committed** |
 
 APG settings: mixing `rho = 0.5`, **10 log-spaced** penalty choices 1e-4 through 1e-1, `max_iter=20000`, `tol=1e-10`, appendix-inspired accelerated proximal updates and intercept handling. The **grid and numerical stopping controls are project choices**, not exact parameter-for-parameter replication claims.
 
@@ -175,7 +175,7 @@ APG pooled OOS R²: **+0.249536392766%**; CD: **+0.249520758854%**. The models c
 
 | File | Role / outputs | Status |
 |---|---|---|
-| `analyze_rf_feature_importance.py` | Reads previously saved RF annual `mdi_mom1m`, `mdi_bm`, `mdi_mvel1`; writes `rf_mdi_summary.csv`, `rf_mdi_yearly.csv`, `rf_mdi_mean.png`, `rf_mdi_by_year.png`. No refitting. | **V** — successful local run; **not committed** |
+| [`analyze_rf_feature_importance.py`](analyze_rf_feature_importance.py) | Reads previously saved RF annual `mdi_mom1m`, `mdi_bm`, `mdi_mvel1`; writes `rf_mdi_summary.csv`, `rf_mdi_yearly.csv`, `rf_mdi_mean.png`, `rf_mdi_by_year.png`. No refitting. | **G/V** — source committed; successful local run |
 | `data/rf_recursive_50trees_leaf100/rf_recursive_yearly.csv` | Original RF annual validation/depth/performance/MDI metadata. | **V**, local data only |
 | `data/rf_feature_importance_analysis/` | Result CSVs and figures. | **V**, local data only |
 
@@ -195,7 +195,7 @@ MDI is **training-time normalized split-impurity importance**, not the percentag
 | [`preprocess_features_stream.py`](preprocess_features_stream.py) and [`impute_features.py`](impute_features.py) | User-supplied actual locally used sources uploaded on Nov 21, replacing tutorial-only pseudocode references. | **G/V** |
 | [`DATA_SOURCES.md`](DATA_SOURCES.md) / [`RESEARCH_PROGRESS.md`](RESEARCH_PROGRESS.md) | Earlier provenance / historical experiment log; **some older status headings are superseded by the current report and this index**. | **G** |
 
-**Reproducibility status:** the GitHub repository now contains both initial feature processing sources and the original CD/RF training scripts. Missing local-only final panel construction, APG and inference scripts prevent an independently complete rerun. Do not claim a full repository-level reproduction until those are checked in and tested.
+**Reproducibility status:** the six additional original local scripts were committed on 21 November 2026: the main proxy-panel constructor, APG trainer, solver comparison, APG/RF forecast comparison, modified-DM test, and RF MDI analysis. Auxiliary validation scripts and historical CD/RF comparison are still absent. Main workflow code is present, but the full pipeline still needs a clean-environment rerun with documented data hashes and package versions.
 
 ## Suggested reading and study order / 以后重学的顺序
 
@@ -232,7 +232,7 @@ Historical practice files in Phases 1–4 remain listed for their learning value
 
 **Completed:** prediction experiments, matched CD/APG/RF comparison, 0/6/12-lag modified DM, descriptive RF MDI, and readable research documentation.
 
-**Remaining:** upload and review missing local scripts, independently audit `mom1m` timing and CRSP equivalence, compare APG and CD objectives/coefficients if needed, preserve environment versions and data hashes, and consider better-target/higher-dimensional follow-up studies. The original paper's macro interactions and portfolio economic evaluation are outside this three-feature run.
+**Remaining:** upload remaining auxiliary validation scripts, perform a clean-clone rerun, independently audit `mom1m` timing and CRSP equivalence, compare APG and CD objectives/coefficients if needed, preserve environment versions and data hashes, and consider better-target/higher-dimensional follow-up studies. The original paper's macro interactions and portfolio economic evaluation are outside this three-feature run.
 
 ## Related documentation
 
