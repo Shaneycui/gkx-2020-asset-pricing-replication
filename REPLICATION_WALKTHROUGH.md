@@ -2,7 +2,7 @@
 
 I've rebuild the machine-learning asset-pricing workflow in Gu, Kelly, and Xiu (2020) works in practice. I started with only three firm characteristics and two models: Elastic Net and Random Forest.
 
-This walkthrough follows the readable **explanation → short code → result** approach of [Tidy Finance](https://blog.tidy-finance.org/posts/gu-kelly-xiu-replication/#sample-splitting-and-tuning). The examples below describe my Python implementation, not a copy of the website's R code. See the [full report](REPLICATION_REPORT.md) for all settings.
+This walkthrough follows the readable **explanation → short code → result**. The examples below describe my Python implementation, not a copy of the website's R code. See the [full report](REPLICATION_REPORT.md) for all settings.
 
 ## 1. Three characteristics
 
