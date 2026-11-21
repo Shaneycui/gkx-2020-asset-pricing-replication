@@ -206,7 +206,48 @@ The main lessons from my replication notes are easy to miss if one only reads th
 
 The remaining candidate variables recorded in my notes are `mom12m` (medium-term momentum), `beta` (market exposure), `idiovol` (idiosyncratic volatility), `turn` (turnover), and `agr` (asset growth). These are **possible next experiments**, not inputs used for the reported results.
 
-## 10. What this project establishes
+## 10. Questions I would ask about this replication
+
+### Why only three characteristics?
+
+I wanted to get the research process right before making the models larger. `mom1m` captures short-term reversal, `bm` captures a value characteristic, and `mvel1` captures firm size. They are different, familiar predictors that let me test monthly ranking, missing-data handling, recursive estimation, and out-of-sample evaluation without a huge feature set.
+
+This was a starting point, not a claim that three characteristics are sufficient. It also means I cannot study the firm's exposure to macroeconomic conditions through characteristic–macro interactions yet.
+
+### Why use `mom1m` as the dependent variable?
+
+More precisely, the target is **next-calendar-month raw `mom1m`**, not the same month's predictor:
+
+```python
+# From build_gkx_full_panel.py; rows are sorted by permno and DATE.
+by_stock = raw.groupby("permno", sort=False)
+raw["following_month"] = by_stock["month"].shift(-1)
+raw["return_proxy"] = by_stock["mom1m"].shift(-1)
+raw["consecutive"] = raw["following_month"].eq(raw["month"] + 1)
+raw.loc[~raw["consecutive"], "return_proxy"] = float("nan")
+```
+
+I chose this proxy because I did not have the corresponding CRSP monthly returns for the full stock universe. A separate check against Yahoo-derived returns for seven *candidate* ticker/PERMNO pairs gave a correlation of about **0.99581** and an MAE of about **0.00066** over **3,335** matched observations.
+
+That is useful supporting evidence, **not proof of equivalence**: the characteristic may have been transformed upstream, its historical information timing still needs an independent audit, and delisting/excess-return treatment is not the same as in CRSP. I would replace this proxy with properly aligned realized excess returns before making stronger asset-pricing claims.
+
+### Is an OOS R² below 0.4% economically meaningful?
+
+Possibly, but it has not been established here. Monthly individual-stock returns are noisy, so even a small reduction in forecast error can be interesting. RF's **+0.385939%** pooled OOS R² means that it reduces the **sum of squared prediction errors** by about **0.386%** relative to always predicting zero—not that it explains 38.6%, or even 0.386%, of economically exploitable return variation.
+
+A useful next test would sort stocks into portfolios by predicted return and examine the spread between high- and low-prediction groups. I would then look at risk exposures, turnover, transaction costs, and performance across time. **I have not run that portfolio test**, so I cannot claim a profitable trading strategy.
+
+### What would I do with CRSP data?
+
+First, I would build a more reliable outcome panel using PERMNO, correctly timed predictors, monthly realized excess returns, and appropriate delisting-return handling. I would validate the date alignment and document the exact CRSP data format before calculating returns, to avoid double-counting delisting adjustments.
+
+Next, I would extend the predictor set beyond three characteristics and introduce macroeconomic variables and their interactions, retaining the same time-respecting out-of-sample design. I would also revisit the RF hyperparameter search and evaluate portfolio results after transaction costs.
+
+My longer-term research question is whether **macroeconomic conditions change the relationship between firm characteristics and expected returns**, and whether such apparent changes reflect genuine economic state dependence rather than estimation noise or machine-learning overfitting.
+
+---
+
+## 11. What this project establishes
 
 I completed a three-feature forecasting workflow: preparing a large panel, using a time-respecting train/validation/test split, fitting Elastic Net and RF, checking solver consistency, testing monthly loss differences, and interpreting RF splits.
 
