@@ -67,7 +67,7 @@ CD predictions           APG predictions              RF predictions
 
 **Main limitation:** the outcome is the following-calendar-month raw `mom1m` **return proxy**, not GKX's CRSP excess-return target; the three predictors and RF hyperparameter grid are simplified.
 
-## Phase 1 — Initial data exploration & Python practice (approximately Nov 9–11)
+## Phase 1 — Initial data exploration & Python practice 
 
 | Python file | Purpose / 作用 | Main input → output | Status |
 |---|---|---|---|
@@ -91,7 +91,7 @@ These scripts explain the *learning path*. They are not the validated final data
 
 **Verified observations from the research record:** source and full features each have 4,117,300 rows; 780 months; imputed output has zero remaining NA values in the three selected features. The BM zero fallback applies to 72,077 observations in 66 months (1957-01 to 1962-06) and is **not** a claimed GKX-mandated convention.
 
-## Phase 3 — Initial ticker mapping & returns experiments (approximately Nov 11–15)
+## Phase 3 — Initial ticker mapping & returns experiments 
 
 | Python file | Purpose / 作用 | Main input → output | Status |
 |---|---|---|---|
@@ -105,7 +105,7 @@ These scripts explain the *learning path*. They are not the validated final data
 
 **Exploratory validation, not certification:** 3,335 consecutive paired observations showed correlation ~0.99581 and MAE ~0.00066 under the next-calendar-month alignment. Historical ticker/PERMNO mapping intervals remain unverified, and raw `mom1m` may contain upstream winsorization.
 
-## Phase 4 — Final simplified public-data panel (approximately Nov 15–16)
+## Phase 4 — Final simplified public-data panel 
 
 | Python file | Purpose / 作用 | Main input → output | Status |
 |---|---|---|---|
@@ -116,7 +116,7 @@ Eligible panel: **4,078,842** rows, **32,642** distinct PERMNOs, six columns: `p
 
 Initial fixed split checked: Training 1957–1986, Validation 1987–1999, Testing 2000–2021. This fixed split was a *learning/pilot configuration*, not the eventual GKX-style yearly recursive scheme.
 
-## Phase 5 — Elastic Net training (approximately Nov 16–17)
+## Phase 5 — Elastic Net training 
 
 | Python file | Purpose / 作用 | Main input → output | Status |
 |---|---|---|---|
@@ -125,7 +125,7 @@ Initial fixed split checked: Training 1957–1986, Validation 1987–1999, Testi
 
 **Exact saved experiment:** `sklearn.linear_model.ElasticNet` (coordinate-descent solver), `l1_ratio=0.5`, `np.logspace(-4,-1,10)`; **2,489,185** predictions and pooled OOS R² **+0.24952075885404934%** against zero predicted returns. The historical completed CD yearly file was reported without saved coefficient columns at the time of the original solver comparison; the **current GitHub training source** has coefficient-saving logic. Whether a particular local CSV already contains these columns must be verified from that file. No paired coefficient/objective-value audit has been completed.
 
-## Phase 6 — Random Forest training (approximately Nov 16–17)
+## Phase 6 — Random Forest training 
 
 | Python file | Purpose / 作用 | Main input → output | Status |
 |---|---|---|---|
@@ -135,7 +135,7 @@ Initial fixed split checked: Training 1957–1986, Validation 1987–1999, Testi
 
 **Exact recursive configuration:** 50 trees, candidate depths [1,2,3,4,5,6], `max_features=3`, `min_samples_leaf=100`, `random_state=42`. Pooled OOS R² **+0.3859393441365433%** from **2,489,185** forecasts. GKX's 300-tree specification was **not** reproduced. Selected depth 6 each year from 2000 through 2011 is the upper search boundary, not a proven unconstrained optimum.
 
-## Phase 7 — Forecast comparison & inference (Nov 17–20)
+## Phase 7 — Forecast comparison & inference
 
 | File | Role / outputs | Status |
 |---|---|---|
@@ -157,7 +157,7 @@ Initial fixed split checked: Training 1957–1986, Validation 1987–1999, Testi
 
 **CD-versus-RF robustness:** 12-lag **z = +2.0864, p = 0.036938**, versus APG **z = +2.0860, p = 0.036975**. Do not mislabel the CD p-value as APG.
 
-## Phase 8 — APG optimization and solver fidelity (Nov 19–20)
+## Phase 8 — APG optimization and solver fidelity 
 
 | File | Role / outputs | Status |
 |---|---|---|
@@ -168,7 +168,7 @@ APG settings: mixing `rho = 0.5`, **10 log-spaced** penalty choices 1e-4 through
 
 APG pooled OOS R²: **+0.249536392766%**; CD: **+0.249520758854%**. The models chose the same numerical penalty in **30/30** test years. Mean absolute APG/CD prediction difference: **1.26318949431e-6**; maximum **9.12524972048e-5**. All 30 APG annual results passed the recorded residual check. These establish close forecast agreement, **not** a full paired-coefficient or exact-objective proof.
 
-## Phase 9 — RF feature importance (Nov 20–21)
+## Phase 9 — RF feature importance 
 
 | File | Role / outputs | Status |
 |---|---|---|
@@ -180,7 +180,7 @@ Average annual MDI: **mom1m 0.674356 (67.44%; #1 in 30/30 years)**, **mvel1 0.22
 
 MDI is **training-time normalized split-impurity importance**, not the percentage of future returns explained, OOS ablation importance, or causal evidence about macroeconomic states. The RF was not retrained for this summary.
 
-## Phase 10 — Research report and GitHub publishing (Nov 20–21)
+## Phase 10 — Research report and GitHub publishing 
 
 | GitHub file | Purpose | Status |
 |---|---|---|
@@ -193,7 +193,7 @@ MDI is **training-time normalized split-impurity importance**, not the percentag
 
 **Reproducibility status:** the six additional original local scripts were committed on 21 November 2026: the main proxy-panel constructor, APG trainer, solver comparison, APG/RF forecast comparison, modified-DM test, and RF MDI analysis. Auxiliary validation scripts and historical CD/RF comparison are still absent. Main workflow code is present, but the full pipeline still needs a clean-environment rerun with documented data hashes and package versions.
 
-## Suggested reading and study order / 以后重学的顺序
+## Suggested reading and study order
 
 1. **Overview:** [README](README.md) → [walkthrough](REPLICATION_WALKTHROUGH.md) → [full report](REPLICATION_REPORT.md).
 2. **Preprocessing:** [`preprocess_features_stream.py`](preprocess_features_stream.py) → [`impute_features.py`](impute_features.py) → local `validate_imputed_features.py`.
