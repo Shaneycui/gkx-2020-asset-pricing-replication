@@ -195,7 +195,7 @@ I used the Random Forest's training-time mean decrease in impurity (MDI) scores 
 
 **Lesson learned:** MDI measures relative splits in a fitted forest. It does **not** mean `mom1m` explains 67% of stock-return variation or prove macroeconomic state dependence.
 
-## 9. Notes I would give another student
+## 9. Notes for next replications
 
 The main lessons from my replication notes are easy to miss if one only reads the final R² numbers:
 
