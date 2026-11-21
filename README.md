@@ -18,8 +18,8 @@ Both methods were compared on **2,489,185 matched stock-month forecasts**. A cro
 
 ## Documentation
 
-- [Code-interleaved walkthrough](REPLICATION_WALKTHROUGH.md) — methods, short code excerpts, results, and decisions.
-- [Full academic report](REPLICATION_REPORT.md) — detailed methodology and statistical analysis.
+- [Replication walkthrough](REPLICATION_WALKTHROUGH.md) — methods, short code excerpts, results, and decisions.
+- [Replication report](REPLICATION_REPORT.md) — detailed methodology and statistical analysis.
 - [Reproducibility guide](REPRODUCIBILITY.md) — environment, inputs, file availability, and checks.
 - [Research log](RESEARCH_PROGRESS.md) and [data provenance](DATA_SOURCES.md) — problems we encountered and how we handled them.
 
