@@ -185,7 +185,7 @@ MDI is **training-time normalized split-impurity importance**, not the percentag
 | GitHub file | Purpose | Status |
 |---|---|---|
 | [`README.md`](README.md) | Concise project homepage and final results. | **G** |
-| [`REPLICATION_WALKTHROUGH.md`](REPLICATION_WALKTHROUGH.md) | Plain-English narrative with actual Python snippets, data checks, and lessons learned; modeled on the explain–code–result style of Tidy Finance. | **G** |
+| [`REPLICATION_WALKTHROUGH.md`](REPLICATION_WALKTHROUGH.md) | Modeled on the explain–code–result style. | **G** |
 | [`REPLICATION_REPORT.md`](REPLICATION_REPORT.md) | Detailed final three-characteristic research report: APG/CD/RF, OOS R², modified DM, MDI, caveats. | **G** |
 | [`REPRODUCIBILITY.md`](REPRODUCIBILITY.md) | Environment setup, output conventions, code availability audit and checkpoints. | **G** |
 | [`requirements.txt`](requirements.txt) | Dependency compatibility ranges, **not** a fixed original environment lock. | **G** |
