@@ -32,4 +32,6 @@ py -3 -m venv .venv
 
 The `data/` directory is Git-ignored. Several scripts used locally have not been committed yet; consult the reproducibility checklist before attempting an end-to-end rerun.
 
-**Citation:** Gu, S., Kelly, B., and Xiu, D. (2020), *Review of Financial Studies* 33(5), 2223–2273. https://doi.org/10.1093/rfs/hhaa009
+**Citation:** 
+1.Gu, S., Kelly, B., and Xiu, D. (2020), *Review of Financial Studies* 33(5), 2223–2273. https://doi.org/10.1093/rfs/hhaa009
+2.[Tidy Finance](https://blog.tidy-finance.org/posts/gu-kelly-xiu-replication/#sample-splitting-and-tuning)
