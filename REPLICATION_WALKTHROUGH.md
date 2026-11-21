@@ -97,7 +97,7 @@ Only targets from the **immediately following calendar month** are kept, leaving
 
 ## 3. Training without looking forward
 
-For the first test year, I trained on **1957–1974**, validated on **1975–1986** and predicted **1987**. Each year moves the window forward. This is taken from the committed [RF script](train_random_forest_recursive.py):
+For the first test year, I trained on **1957–1974**, validated on **1975–1986** and predicted **1987**. Each year moves the window forward:
 
 ```python
 val_start_year = test_year - validation_years
