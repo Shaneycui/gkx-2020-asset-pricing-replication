@@ -36,14 +36,13 @@ data/
 
 ## GitHub code-availability audit (20 November 2026)
 
-Verified on `main`: `train_elastic_net_recursive.py`, `train_random_forest_recursive.py`, `train_random_forest_full_1987.py`, `train_random_forest_pilot.py`. The committed `build_stock_panel.py` is an *exploratory candidate-ticker panel*, not the final 4.08m-row panel constructor.
+Verified on `main`: `preprocess_features_stream.py`, `impute_features.py`, `train_elastic_net_recursive.py`, `train_random_forest_recursive.py`, `train_random_forest_full_1987.py`, `train_random_forest_pilot.py`. The committed `build_stock_panel.py` is an *exploratory candidate-ticker panel*, not the final 4.08m-row panel constructor.
 
 The following have been run or referenced **locally** but still need to be checked in from the actual project (avoid substituting guessed or rewritten source code):
 
 | Script | Function |
 |---|---|
-| `preprocess_features_stream.py` | Monthly ranks and scaling |
-| `impute_features.py`, `validate_imputed_features.py` | Monthly imputation and checks |
+| `validate_imputed_features.py` | Additional imputation checks |
 | `build_gkx_full_panel.py` | Full eligible panel with return proxy |
 | `validate_mom1m_returns.py` | Independent Yahoo-based check |
 | `train_elastic_net_apg_recursive.py` | APG 30-year experiment |
