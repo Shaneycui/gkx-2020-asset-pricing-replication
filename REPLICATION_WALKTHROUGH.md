@@ -14,18 +14,72 @@ The starting data is Dacheng Xiu's public `datashare.csv`: **4,117,300 stock-mon
 | `bm` | Book-to-market |
 | `mvel1` | Size |
 
-To put the variables on a comparable scale, I rank each characteristic across stocks in the same month:
+To put the characteristics on a comparable scale, I rank stocks within each calendar month and map ranks to roughly [-1, 1].
+
+The source contains more than four million rows, so I read it in chunks. **An incomplete final month is held back and combined with the next chunk before ranking**. This matters: ranking half a month would change every stock's relative position.
+
+Here are excerpts from my actual [preprocessing script](preprocess_features_stream.py):
 
 ```python
-# Short illustration of the project's rank scaling
-rank = df.groupby("month")["mom1m"].rank(method="average")
-n = df.groupby("month")["mom1m"].transform("count")
-df["mom1m_scaled"] = 2 * rank / (n + 1) - 1
+# 1. Read only the columns needed for this experiment.
+for chunk in pd.read_csv(xiu_path, usecols=columns, chunksize=200000):
+    month_buffer = pd.concat([month_buffer, chunk], ignore_index=True)
+    latest_date = month_buffer["DATE"].max()
+
+    # Only older months are complete; keep the newest in memory.
+    completed_month = month_buffer[
+        month_buffer["DATE"] < latest_date
+    ].copy()
+
+    for date, month_data in completed_month.groupby("DATE"):
+        processed = preprocess_month(month_data.copy())
+        processed.to_csv(
+            output_path,
+            mode="w" if first_write else "a",
+            header=first_write,
+            index=False,
+        )
+        first_write = False
+
+    month_buffer = month_buffer[
+        month_buffer["DATE"] == latest_date
+    ].copy()
 ```
 
-The complete local script buffers months across CSV chunks. Missing values are filled with the monthly median; early months with no `bm` data use a zero fallback.
+Inside `preprocess_month()`, each characteristic is ranked against stocks from the *same* month:
 
-**Lesson learned:** rows split between CSV chunks must still be ranked together. And a fully missing month cannot have a median.
+```python
+month_data[f"{feature}_rank"] = month_data[feature].rank()
+n = month_data[feature].count()
+month_data[f"{feature}_scaled"] = (
+    2 * month_data[f"{feature}_rank"] / (n + 1) - 1
+)
+```
+
+After the CSV loop, the original script also processes the final buffered month, validates input and output row counts, checks duplicate `permno`/`DATE` keys, and renames the temporary CSV only after those checks pass. **The input must already be sorted by `DATE`**, as it was in my local audit.
+
+### Filling missing characteristics
+
+The second script, [`impute_features.py`](impute_features.py), reads the saved ranked panel and computes each month's cross-sectional median:
+
+```python
+monthly_medians = df.groupby("DATE")[
+    feature_columns
+].transform("median")
+
+df[feature_columns] = df[feature_columns].fillna(
+    monthly_medians
+)
+
+# Remaining NaNs occur if no stock has a valid feature that month.
+remaining_missing = df[feature_columns].isna().sum().sum()
+if remaining_missing > 0:
+    df[feature_columns] = df[feature_columns].fillna(0)
+```
+
+I found **66 early months (1957-01 through 1962-06)** without any valid `bm` values. Their scaled `bm` entries receive the zero fallback. The original imputation script checks that all previously non-missing values remain unchanged, and writes `data/gkx_features_3char_imputed.csv`.
+
+**Lesson learned:** chunk boundaries must not split a cross-sectional ranking, and an all-missing month has no median. Both steps are explicit preprocessing decisions, not proof that I reproduced GKX's full preprocessing pipeline.
 
 ## 2. A future-return *proxy*, not CRSP returns
 
