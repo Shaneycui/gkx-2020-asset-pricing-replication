@@ -25,4 +25,5 @@ Both methods were compared on **2,489,185 matched stock-month forecasts**. A cro
 
 **Citation:** 
 1.Gu, S., Kelly, B., and Xiu, D. (2020), *Review of Financial Studies* 33(5), 2223–2273. https://doi.org/10.1093/rfs/hhaa009
+
 2.Stefan Voigt-Replicating Gu, Kelly & Xiu (2020)[Tidy Finance](https://blog.tidy-finance.org/posts/gu-kelly-xiu-replication/#sample-splitting-and-tuning)
