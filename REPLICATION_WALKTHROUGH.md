@@ -202,7 +202,7 @@ The main lessons from my replication notes are easy to miss if one only reads th
 - **Features versus target:** `mom1m`, `bm`, and `mvel1` are useful starting characteristics, but three inputs leave out much of the economic information in GKX. I have **not included interactions between macroeconomic predictors and stock characteristics**.
 - **Model settings matter:** the sample split follows the core annual GKX design, while the small feature set, APG stopping rule and several RF hyperparameters reflect my own choices. A method inspired by a paper is not automatically a parameter-for-parameter reproduction.
 - **Significance has a scope:** the comparison tests monthly *squared forecast errors*, not the profitability of an investment strategy; the primary HAC specification uses 12 lags and reports an unadjusted p-value.
-- **Be precise about `mom1m`:** in this project it is a short-term reversal/one-month return characteristic. It should not be casually described as a standard 12-month momentum signal. I still need stronger independent verification of the next-month return proxy.
+- **Be precise about `mom1m`:** in this project it is a short-term reversal/one-month return characteristic. It should not be casually described as a standard 12-month momentum signal.
 
 The remaining candidate variables recorded in my notes are `mom12m` (medium-term momentum), `beta` (market exposure), `idiovol` (idiosyncratic volatility), `turn` (turnover), and `agr` (asset growth). These are **possible next experiments**, not inputs used for the reported results.
 
